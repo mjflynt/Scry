@@ -77,7 +77,8 @@ if __FILE__ == $0
     f = nil
     Scry.open("simple.txt", :encoding => 'UTF-8').tap {|o| f = o}.each_line do |ln| 
         print  ln&.chomp
-        puts " ---> look ahead is #{f.scry&.chomp} and ten later is #{f.scry(10)&.chomp}"
+        lookahead = rand(1..10)
+        puts " ---> look ahead is #{f.scry&.chomp} and #{lookahead} later is #{f.scry(lookahead)&.chomp}"
         if f.scry(10)&.chomp == 's'
             f.supplant(10, "Jeff was here!")
             f.inject(10, "Jeff was here also!")
