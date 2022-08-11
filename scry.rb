@@ -13,6 +13,7 @@ class Scry < File
                 @buff = @buff.drop(1).push(nil)
             end
             @buff[-1] = super(*args, **kwargs)                  # no longer needed here... {|line2| @buff[1] = line2 ; break}
+            $_ = @buff[0]
             return @buff[0]
         end
     end
@@ -25,6 +26,7 @@ class Scry < File
                 @buff = @buff.drop(1).push(nil)
             end
             super(*args, **kwargs) {|line| @buff[-1] = line ; break} # interception block
+            $_ = @buff[0]
             yield @buff[0] 
         end
     end
