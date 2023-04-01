@@ -1,4 +1,5 @@
-# mjflynt 
+# mjflynt 20230401
+
 class Scry < File
 
     def initialize(*args, **kwargs) #research: anonymous splat does not work here.
@@ -6,19 +7,15 @@ class Scry < File
         super(*args, **kwargs)
     end
 
-    # self.class.send(:define_method,n) { puts "some method #{n}" }  
-    def def_meth( m )
-        self.class.send(:define_method, m, &block)
-    end
-
+    def def_meth( m, & ) = self.class.send( :define_method, m, & )
 
     def scry_init
 
-        scrybuff = [nil, nil]
+        scrybuff = [nil, nil]   # closure replaces instance variable.
 
         # def gets(*args, **kwargs)
-        self.class.send(:define_method, :gets) do |*args, **kwargs|
-        # def_meth( :gets) do |*args, **kwargs|
+        # self.class.send(:define_method, :gets) do |*args, **kwargs|
+        def_meth :gets do |*args, **kwargs|
             while !eof? || !scrybuff[1].nil?
                 if !scrybuff[0]
                     scrybuff[0] = super(*args, **kwargs)               # no longer needed here... {|line1| scrybuff[0] = line1 ; break}
@@ -32,7 +29,8 @@ class Scry < File
         end
         
         # def each_line(*args, **kwargs)
-        self.class.send(:define_method, :each_line) do |*args, **kwargs, &block|
+        # self.class.send(:define_method, :each_line) do |*args, **kwargs, &block|
+        def_meth :each_line do |*args, **kwargs, &block|
             while !eof? || !scrybuff[1].nil?
                 if !scrybuff[0]
                     super(*args, **kwargs) {|line| scrybuff[0] = line ; break} # interception block
@@ -48,7 +46,8 @@ class Scry < File
     
         #scry returns the requested scrybuff rec as a non-destructive look ahead. 
         # def scry(buff_ = 1)
-        self.class.send(:define_method, :scry) do |buff_ = 1, *args, **kwargs|
+        # self.class.send(:define_method, :scry) do |buff_ = 1, *args, **kwargs|
+        def_meth :scry do |buff_ = 1, *args, **kwargs|
             if buff_ < scrybuff.size
                 scrybuff[buff_] 
             else
@@ -64,7 +63,8 @@ class Scry < File
     
         #supplant overwrites existing record w/ replacement
         # def supplant(buff_, replacement)
-        self.class.send(:define_method, :supplant) do |buff_, replacement|
+        # self.class.send(:define_method, :supplant) do |buff_, replacement|
+        def_meth(:supplant) do |buff_, replacement|
             if buff_ < scrybuff.size
                 scrybuff[buff_] = replacement
             else
@@ -74,7 +74,8 @@ class Scry < File
     
         #inject inserts new_rec before buff_
         # def inject(buff_, new_rec)
-        self.class.send(:define_method, :inject) do |buff_, new_rec|
+        # self.class.send(:define_method, :inject) do |buff_, new_rec|
+        def_meth(:inject) do |buff_, new_rec|
             if buff_ < scrybuff.size
                 scrybuff.insert(buff_, new_rec)
             else
@@ -84,7 +85,8 @@ class Scry < File
     
         #excise removes buff_ rec from scrybuff
         # def excise(buff_)
-        self.class.send(:define_method, :excise) do |buff_|
+        # self.class.send(:define_method, :excise) do |buff_|
+        def_meth(:excise) do |buff_|
             if buff_ < scrybuff.size
                 scrybuff.delete_at(buff_)
             else
