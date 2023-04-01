@@ -1,77 +1,97 @@
 class Scry < File
 
     def initialize(*args, **kwargs) #research: anonymous splat does not work here.
-        @buff = [nil, nil]
+        scry_init
         super(*args, **kwargs)
     end
 
-    def gets(*args, **kwargs)
-        while !eof? || !@buff[1].nil?
-            if !@buff[0]
-                @buff[0] = super(*args, **kwargs)               # no longer needed here... {|line1| @buff[0] = line1 ; break}
-            else  
-                @buff = @buff.drop(1).push(nil)
-            end
-            @buff[-1] = super(*args, **kwargs)                  # no longer needed here... {|line2| @buff[1] = line2 ; break}
-            $_ = @buff[0]
-            return @buff[0]
-        end
+    # self.class.send(:define_method,n) { puts "some method #{n}" }  
+    def def_meth( m )
+        self.class.send(:define_method, m, *args, **kwargs)
     end
+
+
+    def scry_init
+
+        scrybuff = [nil, nil]
+
+        # def gets(*args, **kwargs)
+        self.class.send(:define_method, :gets) do |*args, **kwargs|
+            while !eof? || !scrybuff[1].nil?
+                if !scrybuff[0]
+                    scrybuff[0] = super(*args, **kwargs)               # no longer needed here... {|line1| scrybuff[0] = line1 ; break}
+                else  
+                    scrybuff = scrybuff.drop(1).push(nil)
+                end
+                scrybuff[-1] = super(*args, **kwargs)                  # no longer needed here... {|line2| scrybuff[1] = line2 ; break}
+                $_ = scrybuff[0]
+                return scrybuff[0]
+            end
+        end
+        
+        # def each_line(*args, **kwargs)
+        self.class.send(:define_method, :each_line) do |*args, **kwargs, &block|
+            while !eof? || !scrybuff[1].nil?
+                if !scrybuff[0]
+                    super(*args, **kwargs) {|line| scrybuff[0] = line ; break} # interception block
+                else  
+                    scrybuff = scrybuff.drop(1).push(nil)
+                end
+                super(*args, **kwargs) {|line| scrybuff[-1] = line ; break} # interception block
+                $_ = scrybuff[0]
+                # yield scrybuff[0]
+                block[scrybuff[0]] 
+            end
+        end
     
-    def each_line(*args, **kwargs)
-        while !eof? || !@buff[1].nil?
-            if !@buff[0]
-                super(*args, **kwargs) {|line| @buff[0] = line ; break} # interception block
-            else  
-                @buff = @buff.drop(1).push(nil)
+        #scry returns the requested scrybuff rec as a non-destructive look ahead. 
+        # def scry(buff_ = 1)
+        self.class.send(:define_method, :scry) do |buff_ = 1, *args, **kwargs|
+            if buff_ < scrybuff.size
+                scrybuff[buff_] 
+            else
+                buff_idx = scrybuff.size
+                while buff_idx <= buff_
+                    scrybuff.unshift(:gambit)
+                    scrybuff[-1] = gets(*args, **kwargs)
+                    buff_idx += 1
+                end
             end
-            super(*args, **kwargs) {|line| @buff[-1] = line ; break} # interception block
-            $_ = @buff[0]
-            yield @buff[0] 
+            scrybuff[buff_]
         end
-    end
-
-    #scry returns the requested @buff rec as a non-destructive look ahead. 
-    def scry(buff_ = 1, *args, **kwargs)
-        if buff_ < @buff.size
-            @buff[buff_] 
-        else
-            buff_idx = @buff.size
-            while buff_idx <= buff_
-                @buff.unshift(:gambit)
-                @buff[-1] = gets(*args, **kwargs)
-                buff_idx += 1
+    
+        #supplant overwrites existing record w/ replacement
+        # def supplant(buff_, replacement)
+        self.class.send(:define_method, :supplant) do |buff_, replacement|
+            if buff_ < scrybuff.size
+                scrybuff[buff_] = replacement
+            else
+                raise ArgumentError
             end
         end
-        @buff[buff_]
-    end
-
-    #supplant overwrites existing record w/ replacement
-    def supplant(buff_, replacement, *args, **kwargs)
-        if buff_ < @buff.size
-            @buff[buff_] = replacement
-        else
-            raise ArgumentError
+    
+        #inject inserts new_rec before buff_
+        # def inject(buff_, new_rec)
+        self.class.send(:define_method, :inject) do |buff_, new_rec|
+            if buff_ < scrybuff.size
+                scrybuff.insert(buff_, new_rec)
+            else
+                raise ArgumentError
+            end
+        end
+    
+        #excise removes buff_ rec from scrybuff
+        # def excise(buff_)
+        self.class.send(:define_method, :excise) do |buff_|
+            if buff_ < scrybuff.size
+                scrybuff.delete_at(buff_)
+            else
+                raise ArgumentError
+            end
         end
     end
 
-    #inject inserts new_rec before buff_
-    def inject(buff_, new_rec, *args, **kwargs)
-        if buff_ < @buff.size
-            @buff.insert(buff_, new_rec)
-        else
-            raise ArgumentError
-        end
-    end
-
-    #excise removes buff_ rec from @buff
-    def excise(buff_, *args, **kwargs)
-        if buff_ < @buff.size
-            @buff.delete_at(buff_)
-        else
-            raise ArgumentError
-        end
-    end
+    
 end
 
 
