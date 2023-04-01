@@ -1,3 +1,4 @@
+# mjflynt 
 class Scry < File
 
     def initialize(*args, **kwargs) #research: anonymous splat does not work here.
@@ -7,7 +8,7 @@ class Scry < File
 
     # self.class.send(:define_method,n) { puts "some method #{n}" }  
     def def_meth( m )
-        self.class.send(:define_method, m, *args, **kwargs)
+        self.class.send(:define_method, m, &block)
     end
 
 
@@ -17,6 +18,7 @@ class Scry < File
 
         # def gets(*args, **kwargs)
         self.class.send(:define_method, :gets) do |*args, **kwargs|
+        # def_meth( :gets) do |*args, **kwargs|
             while !eof? || !scrybuff[1].nil?
                 if !scrybuff[0]
                     scrybuff[0] = super(*args, **kwargs)               # no longer needed here... {|line1| scrybuff[0] = line1 ; break}
