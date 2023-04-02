@@ -1,4 +1,4 @@
-# mjflynt 20230401
+# mjflynt 20230402
 
 class Scry < File
 
@@ -7,14 +7,13 @@ class Scry < File
         super(*args, **kwargs)
     end
 
+    # method to hide the ugly boilerplate code "self.class.send( :define_method"
     def def_meth( m, & ) = self.class.send( :define_method, m, & )
 
     def scry_init
 
         scrybuff = [nil, nil]   # closure replaces instance variable.
 
-        # def gets(*args, **kwargs)
-        # self.class.send(:define_method, :gets) do |*args, **kwargs|
         def_meth :gets do |*args, **kwargs|
             while !eof? || !scrybuff[1].nil?
                 if !scrybuff[0]
@@ -28,8 +27,6 @@ class Scry < File
             end
         end
         
-        # def each_line(*args, **kwargs)
-        # self.class.send(:define_method, :each_line) do |*args, **kwargs, &block|
         def_meth :each_line do |*args, **kwargs, &block|
             while !eof? || !scrybuff[1].nil?
                 if !scrybuff[0]
@@ -45,8 +42,6 @@ class Scry < File
         end
     
         #scry returns the requested scrybuff rec as a non-destructive look ahead. 
-        # def scry(buff_ = 1)
-        # self.class.send(:define_method, :scry) do |buff_ = 1, *args, **kwargs|
         def_meth :scry do |buff_ = 1, *args, **kwargs|
             if buff_ < scrybuff.size
                 scrybuff[buff_] 
@@ -62,8 +57,6 @@ class Scry < File
         end
     
         #supplant overwrites existing record w/ replacement
-        # def supplant(buff_, replacement)
-        # self.class.send(:define_method, :supplant) do |buff_, replacement|
         def_meth(:supplant) do |buff_, replacement|
             if buff_ < scrybuff.size
                 scrybuff[buff_] = replacement
@@ -73,8 +66,6 @@ class Scry < File
         end
     
         #inject inserts new_rec before buff_
-        # def inject(buff_, new_rec)
-        # self.class.send(:define_method, :inject) do |buff_, new_rec|
         def_meth(:inject) do |buff_, new_rec|
             if buff_ < scrybuff.size
                 scrybuff.insert(buff_, new_rec)
@@ -84,8 +75,6 @@ class Scry < File
         end
     
         #excise removes buff_ rec from scrybuff
-        # def excise(buff_)
-        # self.class.send(:define_method, :excise) do |buff_|
         def_meth(:excise) do |buff_|
             if buff_ < scrybuff.size
                 scrybuff.delete_at(buff_)
@@ -95,7 +84,7 @@ class Scry < File
         end
     end
 
-    
+    private :scry_init
 end
 
 
