@@ -7,7 +7,7 @@ class Scry < File
         super(*args, **kwargs)
     end
 
-    # method to hide the ugly boilerplate code "self.class.send( :define_method"
+    # Antipalaver to hide the ugly boilerplate code "self.class.send( :define_method"
     def def_meth( m, & ) = self.class.send( :define_method, m, & )
 
     def scry_init
@@ -15,7 +15,8 @@ class Scry < File
         scrybuff = [nil, nil]   # closure replaces instance variable.
 
         def_meth :gets do |*args, **kwargs|
-            while !eof? || !scrybuff[1].nil?
+            # while !eof? || !scrybuff[1].nil?
+            if !eof? || !scrybuff[1].nil?
                 if !scrybuff[0]
                     scrybuff[0] = super(*args, **kwargs)               # no longer needed here... {|line1| scrybuff[0] = line1 ; break}
                 else  
@@ -23,7 +24,8 @@ class Scry < File
                 end
                 scrybuff[-1] = super(*args, **kwargs)                  # no longer needed here... {|line2| scrybuff[1] = line2 ; break}
                 $_ = scrybuff[0]
-                return scrybuff[0]
+                # return scrybuff[0]      # <----- do we need the return here? Only one pass thru the loop?
+                scrybuff[0]
             end
         end
         
@@ -33,6 +35,7 @@ class Scry < File
                     super(*args, **kwargs) {|line| scrybuff[0] = line ; break} # interception block
                 else  
                     scrybuff = scrybuff.drop(1).push(nil)
+                    # scrybuff = scrybuff.shift(1).push(nil)  #what is diff with drop and shift?
                 end
                 super(*args, **kwargs) {|line| scrybuff[-1] = line ; break} # interception block
                 $_ = scrybuff[0]
@@ -57,7 +60,7 @@ class Scry < File
         end
     
         #supplant overwrites existing record w/ replacement
-        def_meth(:supplant) do |buff_, replacement|
+        def_meth :supplant do |buff_, replacement|
             if buff_ < scrybuff.size
                 scrybuff[buff_] = replacement
             else
@@ -66,7 +69,7 @@ class Scry < File
         end
     
         #inject inserts new_rec before buff_
-        def_meth(:inject) do |buff_, new_rec|
+        def_meth :inject do |buff_, new_rec|
             if buff_ < scrybuff.size
                 scrybuff.insert(buff_, new_rec)
             else
@@ -75,7 +78,7 @@ class Scry < File
         end
     
         #excise removes buff_ rec from scrybuff
-        def_meth(:excise) do |buff_|
+        def_meth :excise do |buff_|
             if buff_ < scrybuff.size
                 scrybuff.delete_at(buff_)
             else
